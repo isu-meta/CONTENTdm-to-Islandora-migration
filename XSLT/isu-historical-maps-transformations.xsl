@@ -8,7 +8,7 @@
     <!-- Template for cleanup of ContentDM-to-MODS crosswalk output prior to ingest to Islandora.  -->
     
     <xsl:output method="xml" encoding="UTF-8" indent="yes"/>
-       
+    
     <xsl:strip-space elements="*"/>
     
     <xsl:template match="* | @*" exclude-result-prefixes="#all">
@@ -16,8 +16,8 @@
             <xsl:apply-templates select="@* | * | text() | comment() | processing-instruction()"/>
         </xsl:copy>
     </xsl:template>
-
-    <xsl:template match='//mods:genre[@authority="dct"]' exclude-result-prefixes="#all">
+    
+    <xsl:template match='//mods:genre[@authority="dct"][text() != ""]' exclude-result-prefixes="#all">
         <!--
         Add a typeofResource field after <genre authority="dct"> mapping the
         Dublin Core Type to the MODS typeOfResource vocabulary following the
@@ -39,7 +39,7 @@
         <typeOfResource xmlns="http://www.loc.gov/mods/v3"><xsl:text>cartographic</xsl:text></typeOfResource>
     </xsl:template>
     
-    <xsl:template match='//cdm:dcmi-type' exclude-result-prefixes="#all">
+    <xsl:template match='//cdm:dcmi-type[text() != ""]' exclude-result-prefixes="#all">
         <!--
         Clean up the dcmi-type so it has the correct DC Type Vocabulary
         term for maps. This could be either image or stillimage. Since 
