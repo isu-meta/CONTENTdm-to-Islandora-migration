@@ -19,9 +19,9 @@
     
     <xsl:template match='//mods:genre[@authority="dct"]' exclude-result-prefixes="#all">
         <!--
-        Strip trailing ";" from genre text, then add a typeofResource field after 
-        <genre authority="dct"> mapping the Dublin Core Type to the MODS typeOfResource 
-        vocabulary following the Library of Congress guidelines provided here: 
+        Add a typeofResource field after <genre authority="dct"> mapping the
+        Dublin Core Type to the MODS typeOfResource vocabulary following the
+        Library of Congress guidelines provided here: 
         http://www.loc.gov/standards/mods/mods-dcsimple.html.
         -->
         <xsl:variable name="dc_type" select="lower-case(text())" />
@@ -56,16 +56,16 @@
         <!--
         Remove double-quotes from a tag's text.
         
-        This template replaces '&quot;&quot;' with a single double
-        quote ('"').
+        This template replaces '&amp;quot;&amp;quot;'  and'""' with a single
+        double quote ('"').
         -->
         <xsl:variable name="tag_text" select="text()" />
         <xsl:variable name="quote_string">"</xsl:variable>
         <xsl:copy>
-            <xsl:value-of select="replace($tag_text, '&quot;+', $quote_string)" />
+            <xsl:value-of select="replace($tag_text, '(&amp;quot;|$quote_string)+', $quote_string)" />
         </xsl:copy>
     </xsl:template>
- 
+    
     <xsl:template match="//mods:identifier[@type='local-and-arks']" exclude-result-prefixes="#all">
         <!-- 
         Splits identifiers like 
@@ -86,29 +86,37 @@
                 <identifier type="local" xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="$first_id" /></identifier>
                 <identifier type="ark" xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="$second_id" /></identifier>
             </xsl:when>
-            <xsl:otherwise>
+            <xsl:when test="$first_id='' and $second_id=''">
+                <xsl:choose>
+                    <xsl:when test="contains($id_txt, 'http')">
+                        <identifier type="ark" xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="$id_txt" /></identifier>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <identifier type="local" xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="$id_txt" /></identifier>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:when>
+            <!--<xsl:otherwise>
                 <identifier type="local" xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="$id_txt" /></identifier>
-            </xsl:otherwise>
+            </xsl:otherwise>-->
         </xsl:choose>
     </xsl:template>
     
-    <xsl:template match="//subject[@authority='lcsh']/topic" exclude-result-prefixes="#all">
+    <xsl:template match="//mods:subject[mods:topic]" exclude-result-prefixes="#all">
         <!--
         Split the topic element contents. Move the personal names out of topics
         and into their own subject field.
         -->
-        <xsl:variable name="tokens" select="tokenize(text(), ';')" />
+        <xsl:variable name="tokens" select="tokenize(mods:topic/text(), ';')" />
         <xsl:variable name="topics" select="$tokens[not(contains(., ','))]" />
         <xsl:variable name="names" select="$tokens[contains(., ',')]" />
-        <xsl:copy>
-            <xsl:value-of select="string-join($topics, '; ')" />
-        </xsl:copy>
-        <subject authority="naf">
-            <name type="personal">
-                <namePart><xsl:value-of select="string-join($names, '; ')" /></namePart>
+        <subject authority="lcsh" xmlns="http://www.loc.gov/mods/v3">
+            <topic xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="string-join($topics, ';')" /></topic>
+        </subject>
+        <subject authority="naf" xmlns="http://www.loc.gov/mods/v3">
+            <name type="personal" xmlns="http://www.loc.gov/mods/v3">
+                <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="string-join($names, ';')" /></namePart>
             </name>
         </subject>
     </xsl:template>
-    
-    
 </xsl:stylesheet>
