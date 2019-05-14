@@ -34,7 +34,7 @@
                 <xsl:when test="'text' = $dc_type">
                     <xsl:text>text</xsl:text>
                 </xsl:when>
-                <xsl:when test="'image' = $dc_type or 'stillimage' = $dc_type">
+                <xsl:when test="'image' = $dc_type or 'stillimage' = $dc_type or 'images' = $dc_type">
                     <xsl:text>still image</xsl:text>
                 </xsl:when>
                 <xsl:otherwise>
