@@ -11,19 +11,22 @@
         -->
         <xsl:variable name="gbif_text" select="text()" />
         <xsl:variable name="topic_text" select="../../mods:subject[@authority='lcsh']/mods:topic/text()" />
-        <xsl:variable name="tokens" select="tokenize($topic_text, ';')" />
+        <xsl:variable name="tokens" select="tokenize($topic_text, '; ')" />
         <xsl:variable name="bird_topics_raw" select="$tokens[contains(., '|')]" />
         <xsl:variable name="bird_topics_filtered">
             <xsl:for-each select="$bird_topics_raw">
                 <xsl:sequence select="substring-before(., ' |')" />
             </xsl:for-each>
         </xsl:variable>
-        <xsl:variable name="bird_topics" select="normalize-space(string-join(tokenize($bird_topics_filtered, '\s'), '; '))" />
+        <xsl:variable name="bird_topics" select="normalize-space(string-join(tokenize($bird_topics_filtered, '\s+'), '; '))" />
         
         <topic xmlns="http://www.loc.gov/mods/v3">
             <xsl:choose>
                 <xsl:when test="not($gbif_text)">
                     <xsl:value-of select="$bird_topics" />
+                </xsl:when>
+                <xsl:when test="not($bird_topics)">
+                    <xsl:value-of select="$gbif_text" />
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:value-of select="$gbif_text"/>; <xsl:value-of select="$bird_topics" />
@@ -36,9 +39,9 @@
         <!--
         Remove tokens moved to GBIF topic elements from LCSH topic elements.
         -->
-        <xsl:variable name="tokens" select="tokenize(text(), ';')" />
+        <xsl:variable name="tokens" select="tokenize(text(), '; ')" />
         <topic xmlns="http://www.loc.gov/mods/v3">
-            <xsl:value-of select="normalize-space(string-join($tokens[not(contains(., '|'))], ';'))"/>
+            <xsl:value-of select="normalize-space(string-join($tokens[not(contains(., '|'))], '; '))"/>
         </topic>
     </xsl:template>
 </xsl:stylesheet>
