@@ -4,7 +4,7 @@
     xmlns:cdm="http://www.oclc.org/contentdm"
     exclude-result-prefixes="xs"  extension-element-prefixes="saxon"
     version="2.0">
-    <xsl:template match="mods:title | cdm:title | mods:abstract | cdm:description | cdm:transcription" exclude-result-prefixes="#all">
+    <xsl:template match="mods:title | mods:abstract" exclude-result-prefixes="#all">
         <!--
         Remove doubled quotes from a tag's text. Depending on the collection,
         these may take the form of "", &quot;&quot;, or &amp;quot;&amp;quot;.
