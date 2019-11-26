@@ -5,8 +5,6 @@
     exclude-result-prefixes="xs"  extension-element-prefixes="saxon"
     version="2.0">
     
-    <!-- Template for cleanup of ContentDM-to-MODS crosswalk output prior to ingest to Islandora.  -->
-    
     <xsl:output method="xml" encoding="UTF-8" indent="yes"/>
     
     <xsl:strip-space elements="*"/>
@@ -15,23 +13,46 @@
         <xsl:copy>
             <xsl:apply-templates select="@* | * | text() | comment() | processing-instruction()"/>
         </xsl:copy>
-    </xsl:template>
-    
+    </xsl:template>    
+
     <xsl:template match='//mods:genre[@authority="dct"]' exclude-result-prefixes="#all">
         <!--
-        Strip trailing ";" from genre text, then add a typeofResource field after 
-        <genre authority="dct"> mapping the Dublin Core Type to the MODS typeOfResource 
-        vocabulary following the Library of Congress guidelines provided here: 
-        http://www.loc.gov/standards/mods/mods-dcsimple.html.
-        
-        All items are of type "Text" in Football programs.
-        -->
+            Add a typeofResource field after <genre authority="dct"> mapping the
+            Dublin Core Type to the MODS typeOfResource vocabulary following the
+            Library of Congress guidelines provided here: 
+            http://www.loc.gov/standards/mods/mods-dcsimple.html.
+            -->
+        <xsl:variable name="dc_type" select="lower-case(text())" />
+        <xsl:variable name="type_of_resource">
+            <xsl:choose>
+                <xsl:when test="'text' = $dc_type">
+                    <xsl:text>text</xsl:text>
+                </xsl:when>
+                <xsl:when test="'image' = $dc_type or 'stillimage' = $dc_type">
+                    <xsl:text>still image</xsl:text>
+                </xsl:when>
+                <xsl:when test="'movingimage' = $dc_type">
+                    <xsl:text>moving image</xsl:text>
+                </xsl:when>
+                <xsl:when test="'physicalobject' = $dc_type">
+                    <xsl:text>three dimensional object</xsl:text>
+                </xsl:when>
+                <xsl:when test="'sound' = $dc_type">
+                    <xsl:text>sound recording</xsl:text>
+                </xsl:when>
+                <xsl:when test="'' = $dc_type">
+                    <xs:text>
+                        <xsl:value-of select="$dc_type" />
+                    </xs:text>
+                </xsl:when>
+            </xsl:choose>
+        </xsl:variable>
         <xsl:copy>
             <xsl:apply-templates select="@*|node()" />
         </xsl:copy>
-        <typeOfResource xmlns="http://www.loc.gov/mods/v3">text</typeOfResource>
+        <typeOfResource xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="$type_of_resource" /></typeOfResource>
     </xsl:template>
-    
+
     <xsl:template match="//mods:identifier[@type='local-and-arks']" exclude-result-prefixes="#all">
         <!-- 
         Splits identifiers like 
@@ -62,67 +83,36 @@
                     </xsl:otherwise>
                 </xsl:choose>
             </xsl:when>
-            <!--<xsl:otherwise>
-                <identifier type="local" xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="$id_txt" /></identifier>
-            </xsl:otherwise>-->
         </xsl:choose>
     </xsl:template>
     
-    <xsl:template match="//mods:subject[@authority = 'naf']" exclude-result-prefixes="#all">
-        <!-- 
-        Split corporate and personal subject names.
+    <xsl:template match="//mods:subject[mods:topic]" exclude-result-prefixes="#all">
+        <!--
+        Split the topic element contents. Move events and personal and corporate names out
+        of topics and into their own subject fields.
         -->
-        <xsl:variable name="tokens" select="tokenize(mods:name/mods:namePart/text(), ';')" />
-        <xsl:variable name="geographic_p" select="'(Field|Park|Stadium)'" />
-        <xsl:variable name="geographic_subjects" select="$tokens[matches(., $geographic_p)]" />
-        <xsl:variable name="personal_names" select="$tokens[contains(., ',') and not(contains($geographic_subjects, .))]" />
-        <xsl:variable name="corporate_names" select="$tokens[not(contains(., ',')) and not(contains($geographic_subjects, .))]" />
-        
+        <xsl:variable name="tokens" select="tokenize(mods:topic/text(), ';')" />
+        <xsl:variable name="corporate_names_p" select="'Iowa State University.*'" />
+        <xsl:variable name="topics" select="$tokens[not(contains(., ',')) and not(matches(., $corporate_names_p))]" />
+        <xsl:variable name="personal_names" select="$tokens[contains(., ',')]" />
+        <xsl:variable name="corporate_names" select="$tokens[matches(., $corporate_names_p)]" />
+        <xsl:for-each select="$topics">
+            <subject authority="lcsh" xmlns="http://www.loc.gov/mods/v3">
+                <topic xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(.)" /></topic>
+            </subject>
+        </xsl:for-each>
         <subject authority="naf" xmlns="http://www.loc.gov/mods/v3">
             <xsl:for-each select="$personal_names">
                 <name type="personal" xmlns="http://www.loc.gov/mods/v3">
                     <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(.)" /></namePart>
                 </name>
             </xsl:for-each>
-            
             <xsl:for-each select="$corporate_names">
                 <name type="corporate" xmlns="http://www.loc.gov/mods/v3">
                     <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(.)" /></namePart>
                 </name>
-            </xsl:for-each>
-        </subject>
-        
-        <subject authority="local" xmlns="http://www.loc.gov/mods/v3">
-            <xsl:for-each select="$geographic_subjects">
-                <geographic xmlns="http://www.loc.gov/mods/v3">
-                    <xsl:value-of select="normalize-space(.)" />
-                </geographic>
-            </xsl:for-each>
+            </xsl:for-each> 
         </subject>
     </xsl:template>
-    
-    <xsl:template match="//mods:subject[@authority='lcsh']/mods:topic" exclude-result-prefixes="#all">
-        <!--
-        Split semicolon-delimited LCSH subject topics into their own nodes.
-        -->
-        <xsl:variable name="tokens" select="tokenize(text(), '; ')" />
-        <xsl:for-each select="$tokens">
-            <topic xmlns="http://www.loc.gov/mods/v3">
-                <xsl:value-of select="normalize-space(.)"/>
-            </topic>
-        </xsl:for-each>
-    </xsl:template>
-    
-    <xsl:template match="//mods:subject[@authority='lcsh']/mods:geographic" exclude-result-prefixes="#all">
-        <!--
-        Split semicolon-delimited LCSH geographic subjects into their own nodes.
-        -->
-        <xsl:variable name="tokens" select="tokenize(text(), '; ')" />
-        <xsl:for-each select="$tokens">
-            <geographic xmlns="http://www.loc.gov/mods/v3">
-                <xsl:value-of select="normalize-space(.)"/>
-            </geographic>
-        </xsl:for-each>
-    </xsl:template>
-    
 </xsl:stylesheet>
+

@@ -81,19 +81,57 @@
         </identifier>
     </xsl:template>
     
-    <xsl:template match="mods:title | cdm:title | mods:abstract | cdm:description" exclude-result-prefixes="#all">
+    <xsl:template match="mods:title | mods:abstract" exclude-result-prefixes="#all">
         <!--
-        Remove double-quotes from a tag's text.
+        Remove doubled quotes from a tag's text. Depending on the collection,
+        these may take the form of "", &quot;&quot;, or &amp;quot;&amp;quot;.
         
-        This template replaces '&quot;&quot;' with a single double quote ('"').
+        This template replaces doubled quotes in any of the above forms with a
+        single quotation mark.
         -->
         <xsl:variable name="tag_text" select="text()" />
+        <xsl:variable name="too_many_quotes">(&amp;quot;|&quot;|")+</xsl:variable>
         <xsl:variable name="quote_string">"</xsl:variable>
         <xsl:copy>
-            <xsl:value-of select="replace($tag_text, '(&quot;)+', $quote_string)" />
+            <xsl:value-of select="replace($tag_text, $too_many_quotes, $quote_string)" />
         </xsl:copy>
     </xsl:template>
-                
+    
+    <xsl:template match="//mods:subject[@authority = 'naf']" exclude-result-prefixes="#all">
+        <!-- 
+        Split corporate and personal subject names.
+        -->
+        <xsl:variable name="tokens" select="tokenize(mods:name/mods:namePart/text(), ';')" />
+        <xsl:variable name="personal_names" select="$tokens[contains(., ',')]" />
+        <xsl:variable name="corporate_names" select="$tokens[not(contains(., ','))]" />
+        
+        <subject authority="naf" xmlns="http://www.loc.gov/mods/v3">
+            <xsl:for-each select="$personal_names">
+                <name type="personal" xmlns="http://www.loc.gov/mods/v3">
+                    <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(.)" /></namePart>
+                </name>
+            </xsl:for-each>
+            
+            <xsl:for-each select="$corporate_names">
+                <name type="corporate" xmlns="http://www.loc.gov/mods/v3">
+                    <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(.)" /></namePart>
+                </name>
+            </xsl:for-each>
+        </subject>
+    </xsl:template>
+    
+    <xsl:template match="//mods:subject[@authority='lcsh']/mods:geographic" exclude-result-prefixes="#all">
+        <!--
+        Split semicolon-delimited LCSH geographic subjects into their own nodes.
+        -->
+        <xsl:variable name="tokens" select="tokenize(text(), '; ')" />
+        <xsl:for-each select="$tokens">
+            <geographic xmlns="http://www.loc.gov/mods/v3">
+                <xsl:value-of select="normalize-space(.)"/>
+            </geographic>
+        </xsl:for-each>
+    </xsl:template>
+                   
     <xsl:template match="//mods:identifier[@type='local-and-arks']" exclude-result-prefixes="#all">
         <!-- 
         Splits identifiers like 

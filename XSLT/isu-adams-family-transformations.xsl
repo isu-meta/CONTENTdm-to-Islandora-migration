@@ -78,4 +78,79 @@
         </xsl:copy>
         <typeOfResource xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="$type_of_resource" /></typeOfResource>
     </xsl:template>
+    
+    <xsl:template match="//mods:subject[@authority = 'naf']" exclude-result-prefixes="#all">
+        <!-- 
+        Split corporate and personal subject names.
+        -->
+        <xsl:variable name="tokens" select="tokenize(mods:name/mods:namePart/text(), ';')" />
+        <xsl:variable name="personal_names" select="$tokens[contains(., ',')]" />
+        <xsl:variable name="corporate_names" select="$tokens[not(contains(., ','))]" />
+        
+        <subject authority="naf" xmlns="http://www.loc.gov/mods/v3">
+            <xsl:for-each select="$personal_names">
+                <name type="personal" xmlns="http://www.loc.gov/mods/v3">
+                    <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(.)" /></namePart>
+                </name>
+            </xsl:for-each>
+            
+            <xsl:for-each select="$corporate_names">
+                <name type="corporate" xmlns="http://www.loc.gov/mods/v3">
+                    <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(.)" /></namePart>
+                </name>
+            </xsl:for-each>
+        </subject>
+    </xsl:template>
+    
+    <xsl:template match="//mods:subject[@authority='lcsh']/mods:topic" exclude-result-prefixes="#all">
+        <!--
+        Split semicolon-delimited LCSH subject topics into their own nodes.
+        -->
+        <xsl:variable name="tokens" select="tokenize(text(), '; ')" />
+        <xsl:for-each select="$tokens">
+            <topic xmlns="http://www.loc.gov/mods/v3">
+                <xsl:value-of select="normalize-space(.)"/>
+            </topic>
+        </xsl:for-each>
+    </xsl:template>
+    
+    <xsl:template match="//mods:subject[@authority='lcsh']/mods:geographic" exclude-result-prefixes="#all">
+        <!--
+        Split semicolon-delimited LCSH geographic subjects into their own nodes.
+        -->
+        <xsl:variable name="tokens" select="tokenize(text(), '; ')" />
+        <xsl:for-each select="$tokens">
+            <geographic xmlns="http://www.loc.gov/mods/v3">
+                <xsl:value-of select="normalize-space(.)"/>
+            </geographic>
+        </xsl:for-each>
+    </xsl:template>
+    
+    <xsl:template match="//mods:subject/mods:temporal" exclude-result-prefixes="#all">
+        <!--
+        Split semicolon-delimited temporal subjects into their own nodes.
+        -->
+        <xsl:variable name="tokens" select="tokenize(text(), '; ')" />
+        <xsl:for-each select="$tokens">
+            <temporal xmlns="http://www.loc.gov/mods/v3">
+                <xsl:value-of select="normalize-space(.)"/>
+            </temporal>
+        </xsl:for-each>
+    </xsl:template>
+    
+    <xsl:template match="//mods:originInfo/mods:dateCreated" exclude-result-prefixes="#all">
+        <!-- Reformat dates to match ISO 8601. -->
+        <dateCreated keyDate="yes" encoding="iso8601" xmlns="http://www.loc.gov/mods/v3">
+            <xsl:choose>
+                <xsl:when test="contains(text(), ' - ')">
+                    <xsl:value-of select="replace(text(), ' - ', '/')"/>
+                </xsl:when>
+                <xsl:when test="text() = '-'">
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:value-of select="replace(text(), ' -', '')"/>
+                </xsl:otherwise>
+            </xsl:choose>
+        </dateCreated>
+    </xsl:template>
 </xsl:stylesheet>
