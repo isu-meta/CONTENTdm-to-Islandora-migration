@@ -7,25 +7,27 @@
     <xsl:template match="//mods:subject[@authority='geonames']/mods:geographic" exclude-result-prefixes="#all">
         <!--
         Strip verticle bars and trailing information, so locations like
-        "Clear Lake | Municipality" become "Clear Lake".
+        "Clear Lake | Municipality" become "Clear Lake". Split locations into their own nodes.
         -->
         <xsl:variable name="tokens" select="tokenize(text(), ';')" />
         <xsl:variable name="stripped">
             <xsl:for-each select="$tokens">
                 <xsl:choose>
                     <xsl:when test="contains(., '|')">
-                        <xsl:value-of select="concat(substring-before(., ' |'), '; ')" />
+                        <xsl:value-of select="concat(substring-before(., ' |'), ';')" />
                     </xsl:when>
                     <xsl:otherwise>
-                        <xsl:value-of select="concat(., '; ')" /> 
+                        <xsl:value-of select="concat(., ';')" /> 
                     </xsl:otherwise>
                 </xsl:choose>
             </xsl:for-each>
         </xsl:variable>
-        <xsl:variable name="stripped-spaced" select="normalize-space($stripped)" />
+        <xsl:variable name="stripped_tokens" select="tokenize($stripped, ';')" />
         
-        <geographic xmlns="http://www.loc.gov/mods/v3">
-            <xsl:value-of select="substring($stripped-spaced, 1, string-length($stripped-spaced) - 1)" />
-        </geographic>
+        <xsl:for-each select="$stripped_tokens">
+            <geographic xmlns="http://www.loc.gov/mods/v3">
+                <xsl:value-of select="normalize-space(.)" />
+            </geographic>    
+        </xsl:for-each>
     </xsl:template>
 </xsl:stylesheet>

@@ -12,17 +12,22 @@
         <xsl:variable name="personal_names" select="$tokens[contains(., ',')]" />
         <xsl:variable name="corporate_names" select="$tokens[not(contains(., ','))]" />
         
-        <name type="personal" xmlns="http://www.loc.gov/mods/v3">
-            <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(string-join($personal_names, ';'))" /></namePart>
-            <role xmlns="http://www.loc.gov/mods/v3">
-                <roleTerm authority="marcrelator" xmlns="http://www.loc.gov/mods/v3">creator</roleTerm>
-            </role>
-        </name>
-        <name type="corporate" xmlns="http://www.loc.gov/mods/v3">
-            <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(string-join($corporate_names, ';'))" /></namePart>
-            <role xmlns="http://www.loc.gov/mods/v3">
-                <roleTerm authority="marcrelator" xmlns="http://www.loc.gov/mods/v3">creator</roleTerm>
-            </role>
-        </name>
+        <xsl:for-each select="$personal_names">
+            <name type="personal" xmlns="http://www.loc.gov/mods/v3">
+                <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(.)" /></namePart>
+                <role xmlns="http://www.loc.gov/mods/v3">
+                    <roleTerm authority="marcrelator" xmlns="http://www.loc.gov/mods/v3">creator</roleTerm>
+                </role>
+            </name>
+        </xsl:for-each>
+        
+        <xsl:for-each select="$corporate_names">
+            <name type="corporate" xmlns="http://www.loc.gov/mods/v3">
+                <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(.)" /></namePart>
+                <role xmlns="http://www.loc.gov/mods/v3">
+                    <roleTerm authority="marcrelator" xmlns="http://www.loc.gov/mods/v3">creator</roleTerm>
+                </role>
+            </name>
+        </xsl:for-each>
     </xsl:template>
 </xsl:stylesheet>

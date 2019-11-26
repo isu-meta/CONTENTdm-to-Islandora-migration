@@ -13,12 +13,17 @@
         <xsl:variable name="corporate_names" select="$tokens[not(contains(., ','))]" />
         
         <subject authority="naf" xmlns="http://www.loc.gov/mods/v3">
-            <name type="personal" xmlns="http://www.loc.gov/mods/v3">
-                <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(string-join($personal_names, ';'))" /></namePart>
-            </name>
-            <name type="corporate" xmlns="http://www.loc.gov/mods/v3">
-                <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(string-join($corporate_names, ';'))" /></namePart>
-            </name>
+            <xsl:for-each select="$personal_names">
+                <name type="personal" xmlns="http://www.loc.gov/mods/v3">
+                    <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(.)" /></namePart>
+                </name>
+            </xsl:for-each>
+            
+            <xsl:for-each select="$corporate_names">
+                <name type="corporate" xmlns="http://www.loc.gov/mods/v3">
+                    <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(.)" /></namePart>
+                </name>
+            </xsl:for-each>
         </subject>
     </xsl:template>
 </xsl:stylesheet>

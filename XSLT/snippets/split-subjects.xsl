@@ -17,23 +17,31 @@
         <xsl:variable name="personal_names" select="$tokens[contains(., ',')]" />
         <xsl:variable name="corporate_names" select="$tokens[matches(., $corporate_names_p)]" />
         <xsl:variable name="events" select="$tokens[matches(., $events_p)]" />
-        <subject authority="lcsh" xmlns="http://www.loc.gov/mods/v3">
-            <topic xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="string-join($topics, ';')" /></topic>
-        </subject>
+        <xsl:for-each select="$topics">
+            <subject authority="lcsh" xmlns="http://www.loc.gov/mods/v3">
+                <topic xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(.)" /></topic>
+            </subject>
+        </xsl:for-each>
         <subject authority="naf" xmlns="http://www.loc.gov/mods/v3">
-            <name type="personal" xmlns="http://www.loc.gov/mods/v3">
-                <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(string-join($personal_names, ';'))" /></namePart>
-            </name>
-            <name type="corporate" xmlns="http://www.loc.gov/mods/v3">
-                <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(string-join($corporate_names, ';'))" /></namePart>
-            </name>
+            <xsl:for-each select="$personal_names">
+                <name type="personal" xmlns="http://www.loc.gov/mods/v3">
+                    <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(.)" /></namePart>
+                </name>
+            </xsl:for-each>
+            <xsl:for-each select="$corporate_names">
+                <name type="corporate" xmlns="http://www.loc.gov/mods/v3">
+                    <namePart xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(.)" /></namePart>
+                </name>
+            </xsl:for-each> 
         </subject>
         <subject xmlns="http://www.loc.gov/mods/v3">
-            <name type="conference" xmlns="http://www.loc.gov/mods/v3">
-                <namePart xmlns="http://www.loc.gov/mods/v3">
-                    <xsl:value-of select="normalize-space(string-join($events, ';'))" />
-                </namePart>
-            </name>
+            <xsl:for-each select="$events">
+                <name type="conference" xmlns="http://www.loc.gov/mods/v3">
+                    <namePart xmlns="http://www.loc.gov/mods/v3">
+                        <xsl:value-of select="normalize-space(string-join($events, ';'))" />
+                    </namePart>
+                </name>
+            </xsl:for-each>
         </subject>
     </xsl:template>
 </xsl:stylesheet>

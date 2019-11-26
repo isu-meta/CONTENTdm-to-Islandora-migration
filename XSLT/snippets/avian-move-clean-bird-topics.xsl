@@ -7,9 +7,10 @@
     <xsl:template match="//mods:subject[@authority='gbif']/mods:topic" exclude-result-prefixes="#all">
         <!--
         Copy topics with the format "Scientific_name | Common_name" from LCSH subject headings.
-        Strip it down to only the scientific name and copy into the GBIF topic element.
+        Strip it down to only the scientific name and copy into the GBIF topic element. Split
+        GBIF topics into their own nodes.
         -->
-        <xsl:variable name="gbif_text" select="text()" />
+        <xsl:variable name="gbif_tokens" select="tokenize(text(), ';')" />
         <xsl:variable name="topic_text" select="../../mods:subject[@authority='lcsh']/mods:topic/text()" />
         <xsl:variable name="tokens" select="tokenize($topic_text, '; ')" />
         <xsl:variable name="bird_topics_raw" select="$tokens[contains(., '|')]" />
@@ -18,30 +19,25 @@
                 <xsl:sequence select="substring-before(., ' |')" />
             </xsl:for-each>
         </xsl:variable>
-        <xsl:variable name="bird_topics" select="normalize-space(string-join(tokenize($bird_topics_filtered, '\s+'), '; '))" />
+        <xsl:variable name="bird_group_tokens" select="tokenize($bird_topics_filtered, '\s+')" />
         
-        <topic xmlns="http://www.loc.gov/mods/v3">
-            <xsl:choose>
-                <xsl:when test="not($gbif_text)">
-                    <xsl:value-of select="$bird_topics" />
-                </xsl:when>
-                <xsl:when test="not($bird_topics)">
-                    <xsl:value-of select="$gbif_text" />
-                </xsl:when>
-                <xsl:otherwise>
-                    <xsl:value-of select="$gbif_text"/>; <xsl:value-of select="$bird_topics" />
-                </xsl:otherwise>
-            </xsl:choose>
-        </topic>
+        <xsl:for-each select="$gbif_tokens">
+            <topic xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(.)" /></topic>
+        </xsl:for-each>
+        <xsl:for-each select="$bird_group_tokens">
+            <topic xmlns="http://www.loc.gov/mods/v3"><xsl:value-of select="normalize-space(.)" /></topic>
+        </xsl:for-each>
     </xsl:template>
     
     <xsl:template match="//mods:subject[@authority='lcsh']/mods:topic" exclude-result-prefixes="#all">
         <!--
-        Remove tokens moved to GBIF topic elements from LCSH topic elements.
+        Remove tokens moved to GBIF topic elements from LCSH topic elements. Split topics into their own nodes.
         -->
         <xsl:variable name="tokens" select="tokenize(text(), '; ')" />
-        <topic xmlns="http://www.loc.gov/mods/v3">
-            <xsl:value-of select="normalize-space(string-join($tokens[not(contains(., '|'))], '; '))"/>
-        </topic>
+        <xsl:for-each select="$tokens[not(contains(., '|'))]">
+            <topic xmlns="http://www.loc.gov/mods/v3">
+                <xsl:value-of select="normalize-space(.)"/>
+            </topic>
+        </xsl:for-each>
     </xsl:template>
 </xsl:stylesheet>
