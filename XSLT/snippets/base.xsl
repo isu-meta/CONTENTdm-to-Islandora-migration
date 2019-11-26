@@ -13,5 +13,5 @@
         <xsl:copy>
             <xsl:apply-templates select="@* | * | text() | comment() | processing-instruction()"/>
         </xsl:copy>
-    </xsl:template>    
+    </xsl:template>
 </xsl:stylesheet>
